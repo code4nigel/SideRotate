@@ -8,14 +8,13 @@ When auto-rotate is locked and the device is physically tilted sideways, Side Ro
 
 ## Demonstration
 
-<div align="center">
-  <img src="UI/UI%20Demo2.jpg" width="320" alt="Side Rotate Modern Dashboard" />
-  <p><em>Side Rotate edge-to-edge interface with active orientation monitoring and real-time customizer</em></p>
-</div>
+| Portrait Mode | App Dashboard | Landscape Mode |
+| :---: | :---: | :---: |
+| <img src="UI/Demo_v.jpg" width="240" alt="Portrait Mode with Floating Button" /> | <img src="UI/UI%20Demo2.jpg" width="240" alt="Side Rotate Dashboard" /> | <img src="UI/Demo_h(1).jpg" width="240" alt="Landscape Mode with Floating Button" /> |
 
-A full video demonstration showcasing the tilt detection, live floating rotation button, swipe-to-dismiss gesture, and instantaneous screen rotation is available:
+A full demonstration showcasing smart tilt detection, the corner floating rotation button, swipe-to-dismiss gesture, and instantaneous screen rotation is available:
 
-- [Watch Video Demonstration](UI/Video%20Demo.mp4)
+- [Watch Live Video Demonstration on YouTube Shorts](https://youtube.com/shorts/g9uGrL3bMnk)
 
 ---
 
