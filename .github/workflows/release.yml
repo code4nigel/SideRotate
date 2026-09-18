@@ -1,0 +1,80 @@
+name: Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for the release (e.g. v1.0.1)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Attach APK to GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Locate Release APK and Extract Version
+        id: prep_release
+        run: |
+          mkdir -p version
+          LATEST_APK=$(ls -t version/SideRotate_v*.apk 2>/dev/null | head -n 1)
+
+          if [ -z "$LATEST_APK" ]; then
+            echo "No APK found in version/ directory. Exiting."
+            exit 1
+          fi
+
+          FILE_NAME=$(basename "$LATEST_APK")
+          DETECTED_TAG=$(echo "$FILE_NAME" | sed 's/SideRotate_//' | sed 's/\.apk//')
+
+          if [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            RELEASE_TAG="${{ github.event.inputs.tag_name }}"
+          elif [ -n "${{ github.ref_name }}" ] && [[ "${{ github.ref_name }}" == v* ]]; then
+            RELEASE_TAG="${{ github.ref_name }}"
+          else
+            RELEASE_TAG="$DETECTED_TAG"
+          fi
+
+          # Ensure tag starts with v
+          if [[ "$RELEASE_TAG" != v* ]]; then
+            RELEASE_TAG="v$RELEASE_TAG"
+          fi
+
+          echo "apk_path=$LATEST_APK" >> $GITHUB_OUTPUT
+          echo "tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
+          echo "filename=$FILE_NAME" >> $GITHUB_OUTPUT
+
+          echo "Found APK: $LATEST_APK"
+          echo "Target Tag: $RELEASE_TAG"
+
+      - name: Create or Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.prep_release.outputs.tag }}
+          name: Side Rotate ${{ steps.prep_release.outputs.tag }}
+          body: |
+            ### Side Rotate ${{ steps.prep_release.outputs.tag }}
+
+            Automated release build.
+
+            #### Installation
+            1. Download `${{ steps.prep_release.outputs.filename }}` below.
+            2. Open the file on your device to install.
+            3. Grant required overlay and modify system settings permissions.
+          files: ${{ steps.prep_release.outputs.apk_path }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
