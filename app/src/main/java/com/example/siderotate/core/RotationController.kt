@@ -56,38 +56,60 @@ object RotationController {
 
     /**
      * Maps physical sensor orientation degrees (0..359) to Android Surface.ROTATION_* constant.
-     * Returns null if device is held diagonally (deadzone) or in an unsupported orientation.
+     * 
+     * In Android:
+     * - 0 deg (device upright portrait) -> Surface.ROTATION_0
+     * - 90 deg (device tilted 90 deg clockwise, left side is UP) -> Surface.ROTATION_270
+     * - 180 deg (device upside down) -> Surface.ROTATION_180 (if allowed, else Surface.ROTATION_0)
+     * - 270 deg (device tilted 90 deg counter-clockwise, right side is UP) -> Surface.ROTATION_90
      */
     fun mapOrientationDegreesToSurface(
         orientationDegrees: Int,
         allow180: Boolean = false,
-        toleranceDegrees: Int = 30
+        toleranceDegrees: Int = 40
     ): Int? {
         if (orientationDegrees == OrientationEventListener.ORIENTATION_UNKNOWN) {
             return null
         }
 
-        // Upright Portrait (0 deg)
+        // Upright Portrait (around 0 deg)
         if (orientationDegrees in (360 - toleranceDegrees)..359 || orientationDegrees in 0..toleranceDegrees) {
             return Surface.ROTATION_0
         }
 
-        // Phone tilted counter-clockwise 90 deg (top to left) -> target rotation Surface.ROTATION_90
+        // Phone tilted clockwise 90 deg (left side is facing UP) -> target Surface.ROTATION_270
         if (orientationDegrees in (90 - toleranceDegrees)..(90 + toleranceDegrees)) {
-            return Surface.ROTATION_90
-        }
-
-        // Upside down Portrait (180 deg)
-        if (allow180 && orientationDegrees in (180 - toleranceDegrees)..(180 + toleranceDegrees)) {
-            return Surface.ROTATION_180
-        }
-
-        // Phone tilted clockwise 90 deg (top to right) -> target rotation Surface.ROTATION_270
-        if (orientationDegrees in (270 - toleranceDegrees)..(270 + toleranceDegrees)) {
             return Surface.ROTATION_270
         }
 
+        // Upside down Portrait (around 180 deg)
+        if (orientationDegrees in (180 - toleranceDegrees)..(180 + toleranceDegrees)) {
+            return if (allow180) Surface.ROTATION_180 else Surface.ROTATION_0
+        }
+
+        // Phone tilted counter-clockwise 90 deg (right side is facing UP) -> target Surface.ROTATION_90
+        if (orientationDegrees in (270 - toleranceDegrees)..(270 + toleranceDegrees)) {
+            return Surface.ROTATION_90
+        }
+
         return null
+    }
+
+    /**
+     * Determines optimal landscape rotation based on last known physical orientation degrees.
+     * If held with left edge up (around 90 deg) -> ROTATION_270.
+     * If held with right edge up (around 270 deg) -> ROTATION_90.
+     * Default when upright or flat -> ROTATION_90.
+     */
+    fun getOptimalLandscapeRotation(orientationDegrees: Int?): Int {
+        if (orientationDegrees == null || orientationDegrees == OrientationEventListener.ORIENTATION_UNKNOWN) {
+            return Surface.ROTATION_90
+        }
+        return if (orientationDegrees in 45..180) {
+            Surface.ROTATION_270
+        } else {
+            Surface.ROTATION_90
+        }
     }
 
     /**

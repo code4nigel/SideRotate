@@ -1,90 +1,51 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Top-Right Clockwise Curved Arrow (Samsung One UI Style) -->
+    <!-- Top clockwise flowing arc -->
     <path
-        android:pathData="M69,27 C77.5,32 83.5,41 83.5,51.5 C83.5,55 82.7,58.3 81.2,61.3"
-        android:strokeWidth="4.8"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round">
-        <aapt:attr name="android:strokeColor">
-            <gradient
-                android:startX="69"
-                android:startY="27"
-                android:endX="83.5"
-                android:endY="61.3"
-                android:type="linear">
-                <item android:offset="0.0" android:color="#FF06B6D4" />
-                <item android:offset="1.0" android:color="#FF6366F1" />
-            </gradient>
-        </aapt:attr>
-    </path>
-    <!-- Top Arrow Tip -->
-    <path
-        android:pathData="M72.5,20 L69,28 L78,29.5"
-        android:strokeColor="#FF06B6D4"
-        android:strokeWidth="4.8"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:pathData="M36.09,31.86 A28,28 0 0,1 82.0,54.0"
+        android:strokeColor="#FFFCF1D0"
+        android:strokeWidth="5.8"
+        android:strokeLineCap="round" />
 
-    <!-- Bottom-Left Clockwise Curved Arrow (Samsung One UI Style) -->
+    <!-- Top clockwise downward arrowhead -->
     <path
-        android:pathData="M39,81 C30.5,76 24.5,67 24.5,56.5 C24.5,53 25.3,49.7 26.8,46.7"
-        android:strokeWidth="4.8"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round">
-        <aapt:attr name="android:strokeColor">
-            <gradient
-                android:startX="39"
-                android:startY="81"
-                android:endX="24.5"
-                android:endY="46.7"
-                android:type="linear">
-                <item android:offset="0.0" android:color="#FF818CF8" />
-                <item android:offset="1.0" android:color="#FF06B6D4" />
-            </gradient>
-        </aapt:attr>
-    </path>
-    <!-- Bottom Arrow Tip -->
+        android:fillColor="#FFFCF1D0"
+        android:pathData="M82.0,65.4 L72.23,48.14 L91.77,48.14 Z" />
+
+    <!-- Bottom clockwise flowing arc -->
     <path
-        android:pathData="M35.5,88 L39,80 L30,78.5"
-        android:strokeColor="#FF818CF8"
-        android:strokeWidth="4.8"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:pathData="M71.91,76.14 A28,28 0 0,1 26.0,54.0"
+        android:strokeColor="#FFFCF1D0"
+        android:strokeWidth="5.8"
+        android:strokeLineCap="round" />
+
+    <!-- Bottom clockwise upward arrowhead -->
+    <path
+        android:fillColor="#FFFCF1D0"
+        android:pathData="M26.0,42.6 L35.77,59.86 L16.23,59.86 Z" />
 
     <!-- Central Smartphone Body Outline -->
     <path
-        android:pathData="M44.5,34.5 L63.5,34.5 A5.5,5.5 0 0,1 69,40 L69,68 A5.5,5.5 0 0,1 63.5,73.5 L44.5,73.5 A5.5,5.5 0 0,1 39,68 L39,40 A5.5,5.5 0 0,1 44.5,34.5 Z"
-        android:strokeWidth="3.6"
-        android:strokeColor="#FFFFFFFF"
+        android:fillColor="#FF0D1C42"
+        android:strokeColor="#FFFCF1D0"
+        android:strokeWidth="4.2"
         android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:strokeLineJoin="round"
+        android:pathData="M46.84,37.07 L61.16,37.07 A5.2,5.2 0 0,1 66.36,42.27 L66.36,65.73 A5.2,5.2 0 0,1 61.16,70.93 L46.84,70.93 A5.2,5.2 0 0,1 41.64,65.73 L41.64,42.27 A5.2,5.2 0 0,1 46.84,37.07 Z" />
 
-    <!-- Smartphone Inner Screen Display -->
+    <!-- Inner Screen Area -->
     <path
-        android:pathData="M44.5,39 L63.5,39 A2.5,2.5 0 0,1 66,41.5 L66,63 A2.5,2.5 0 0,1 63.5,65.5 L44.5,65.5 A2.5,2.5 0 0,1 42,63 L42,41.5 A2.5,2.5 0 0,1 44.5,39 Z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:startX="42"
-                android:startY="39"
-                android:endX="66"
-                android:endY="65.5"
-                android:type="linear">
-                <item android:offset="0.0" android:color="#6606B6D4" />
-                <item android:offset="1.0" android:color="#666366F1" />
-            </gradient>
-        </aapt:attr>
-    </path>
+        android:fillColor="#FF22396F"
+        android:pathData="M46.84,42.93 L61.16,42.93 A2.3,2.3 0 0,1 63.46,45.23 L63.46,62.77 A2.3,2.3 0 0,1 61.16,65.07 L46.84,65.07 A2.3,2.3 0 0,1 44.54,62.77 L44.54,45.23 A2.3,2.3 0 0,1 46.84,42.93 Z" />
 
-    <!-- Bottom Home Indicator Line -->
+    <!-- Home Indicator -->
     <path
-        android:pathData="M50.5,70 L57.5,70"
-        android:strokeColor="#B3FFFFFF"
-        android:strokeWidth="2.4"
+        android:pathData="M50.74,67.67 L57.26,67.67"
+        android:strokeColor="#FFFCF1D0"
+        android:strokeWidth="2.6"
         android:strokeLineCap="round" />
 </vector>

@@ -2,22 +2,33 @@ package com.example.siderotate.theme
 
 import androidx.compose.ui.graphics.Color
 
-val IndigoPrimary = Color(0xFF6366F1)
-val IndigoSecondary = Color(0xFF818CF8)
-val CyanAccent = Color(0xFF06B6D4)
+// User defined color palette
+val PaletteNavyDark = Color(0xFF010736)   // Deep midnight navy
+val PaletteNavyCard = Color(0xFF0D1C42)   // Card & container surface
+val PaletteNavyBlue = Color(0xFF22396F)   // Accent blue & borders
+val PaletteWarmCream = Color(0xFFFCF1D0)  // Luxurious warm cream accent
+
+val TextPrimary = Color(0xFFFCF1D0)
+val TextSecondary = Color(0xFFA5B8E3)
+val TextMuted = Color(0xFF5E75A8)
+
 val EmeraldSuccess = Color(0xFF10B981)
 val AmberWarning = Color(0xFFF59E0B)
 val RoseError = Color(0xFFF43F5E)
 
-val DarkBackground = Color(0xFF0D0F14)
-val DarkSurface = Color(0xFF151922)
-val DarkSurfaceVariant = Color(0xFF1E2433)
-val DarkBorder = Color(0xFF2B3448)
+val DarkBackground = PaletteNavyDark
+val DarkSurface = PaletteNavyCard
+val DarkSurfaceVariant = Color(0xFF122352)
+val DarkBorder = PaletteNavyBlue
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val IndigoPrimary = PaletteWarmCream
+val IndigoSecondary = Color(0xFFEADBAB)
+val CyanAccent = PaletteNavyBlue
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val Purple80 = PaletteWarmCream
+val PurpleGrey80 = PaletteNavyBlue
+val Pink80 = PaletteWarmCream
+
+val Purple40 = PaletteNavyBlue
+val PurpleGrey40 = PaletteNavyCard
+val Pink40 = PaletteNavyDark

@@ -34,6 +34,7 @@ class SideRotateService : Service() {
     private var screenReceiver: BroadcastReceiver? = null
 
     private var isScreenInteractive = true
+    private var lastKnownOrientation: Int? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -42,7 +43,9 @@ class SideRotateService : Service() {
 
         overlayWindowManager.setOnRotateClickListener { targetRotation ->
             val settings = appPreferences.getSettingsSnapshot()
-            RotationController.applyRotation(this, targetRotation, settings.rotationMode)
+            RotationController.applyRotation(this, targetRotation, settings.rotationMode) {
+                updateNotification()
+            }
         }
 
         setupNotificationChannel()
@@ -53,6 +56,7 @@ class SideRotateService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = intent?.action
+        val settings = appPreferences.getSettingsSnapshot()
 
         if (action == ACTION_STOP) {
             appPreferences.setServiceEnabled(false)
@@ -61,10 +65,37 @@ class SideRotateService : Service() {
             return START_NOT_STICKY
         }
 
-        if (action == ACTION_TEST_OVERLAY) {
-            val settings = appPreferences.getSettingsSnapshot()
+        if (action == ACTION_ROTATE_PORTRAIT) {
+            RotationController.applyRotation(this, Surface.ROTATION_0, settings.rotationMode) {
+                updateNotification()
+            }
+            overlayWindowManager.hideOverlay()
+            return START_STICKY
+        }
+
+        if (action == ACTION_ROTATE_LANDSCAPE) {
             val current = RotationController.getCurrentUserRotation(this)
-            val testTarget = if (current == Surface.ROTATION_0) Surface.ROTATION_90 else Surface.ROTATION_0
+            val target = if (current == Surface.ROTATION_90) {
+                Surface.ROTATION_270
+            } else if (current == Surface.ROTATION_270) {
+                Surface.ROTATION_90
+            } else {
+                RotationController.getOptimalLandscapeRotation(lastKnownOrientation)
+            }
+            RotationController.applyRotation(this, target, settings.rotationMode) {
+                updateNotification()
+            }
+            overlayWindowManager.hideOverlay()
+            return START_STICKY
+        }
+
+        if (action == ACTION_TEST_OVERLAY) {
+            val current = RotationController.getCurrentUserRotation(this)
+            val testTarget = if (current == Surface.ROTATION_0) {
+                RotationController.getOptimalLandscapeRotation(lastKnownOrientation)
+            } else {
+                Surface.ROTATION_0
+            }
             overlayWindowManager.showOverlay(testTarget, settings)
             return START_STICKY
         }
@@ -72,12 +103,20 @@ class SideRotateService : Service() {
         val notification = createNotification()
         startForeground(NOTIFICATION_ID, notification)
 
-        val settings = appPreferences.getSettingsSnapshot()
         if (settings.isServiceEnabled && isScreenInteractive) {
             orientationListener?.enable()
         }
 
         return START_STICKY
+    }
+
+    private fun updateNotification() {
+        try {
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.notify(NOTIFICATION_ID, createNotification())
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun setupNotificationChannel() {
@@ -106,6 +145,28 @@ class SideRotateService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
+        // Quick rotate to portrait
+        val portraitIntent = Intent(this, SideRotateService::class.java).apply {
+            action = ACTION_ROTATE_PORTRAIT
+        }
+        val portraitPendingIntent = PendingIntent.getService(
+            this,
+            2,
+            portraitIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        // Quick rotate to landscape
+        val landscapeIntent = Intent(this, SideRotateService::class.java).apply {
+            action = ACTION_ROTATE_LANDSCAPE
+        }
+        val landscapePendingIntent = PendingIntent.getService(
+            this,
+            3,
+            landscapeIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
         val stopIntent = Intent(this, SideRotateService::class.java).apply {
             action = ACTION_STOP
         }
@@ -116,11 +177,22 @@ class SideRotateService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
+        val currentRot = RotationController.getCurrentUserRotation(this)
+        val rotDesc = when (currentRot) {
+            Surface.ROTATION_0 -> "Portrait"
+            Surface.ROTATION_90 -> "Landscape"
+            Surface.ROTATION_270 -> "Landscape (Inverted)"
+            Surface.ROTATION_180 -> "Portrait (Inverted)"
+            else -> "Portrait"
+        }
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_rotate)
             .setContentTitle("Side Rotate Active")
-            .setContentText("Listening for phone tilt while rotation is locked")
+            .setContentText("Current: $rotDesc • Auto-rotate locked")
             .setContentIntent(openAppPendingIntent)
+            .addAction(R.drawable.ic_rotate_screen, "Portrait", portraitPendingIntent)
+            .addAction(R.drawable.ic_rotate_screen, "Landscape", landscapePendingIntent)
             .addAction(0, "Turn Off", stopPendingIntent)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -132,6 +204,7 @@ class SideRotateService : Service() {
         orientationListener = object : OrientationEventListener(this) {
             override fun onOrientationChanged(orientation: Int) {
                 if (orientation == ORIENTATION_UNKNOWN) return
+                lastKnownOrientation = orientation
 
                 val settings = appPreferences.getSettingsSnapshot()
                 if (!settings.isServiceEnabled) {
@@ -227,6 +300,8 @@ class SideRotateService : Service() {
 
         const val ACTION_START = "com.example.siderotate.action.START"
         const val ACTION_STOP = "com.example.siderotate.action.STOP"
+        const val ACTION_ROTATE_PORTRAIT = "com.example.siderotate.action.ROTATE_PORTRAIT"
+        const val ACTION_ROTATE_LANDSCAPE = "com.example.siderotate.action.ROTATE_LANDSCAPE"
         const val ACTION_TEST_OVERLAY = "com.example.siderotate.action.TEST_OVERLAY"
 
         fun startService(context: Context) {
