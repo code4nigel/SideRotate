@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       tag_name:
@@ -47,7 +49,6 @@ jobs:
             RELEASE_TAG="$DETECTED_TAG"
           fi
 
-          # Ensure tag starts with v
           if [[ "$RELEASE_TAG" != v* ]]; then
             RELEASE_TAG="v$RELEASE_TAG"
           fi
@@ -76,5 +77,6 @@ jobs:
           files: ${{ steps.prep_release.outputs.apk_path }}
           draft: false
           prerelease: false
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
