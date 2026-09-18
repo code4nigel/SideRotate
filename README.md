@@ -113,4 +113,8 @@ The script will:
 
 ## License
 
-This project is licensed under the Apache License 2.0.
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0). See the [LICENSE](LICENSE) file for details.
+
+---
+
+Built with ❤️ by [nigelweb](https://github.com/code4nigel)
