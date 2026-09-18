@@ -13,7 +13,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -21,6 +24,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,6 +37,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -97,6 +102,13 @@ import com.example.siderotate.theme.DarkSurfaceVariant
 import com.example.siderotate.theme.EmeraldSuccess
 import com.example.siderotate.theme.IndigoPrimary
 import com.example.siderotate.theme.IndigoSecondary
+import com.example.siderotate.theme.PaletteNavyDark
+import com.example.siderotate.theme.PaletteNavyCard
+import com.example.siderotate.theme.PaletteNavyBlue
+import com.example.siderotate.theme.PaletteWarmCream
+import com.example.siderotate.theme.TextPrimary
+import com.example.siderotate.theme.TextSecondary
+import com.example.siderotate.theme.TextMuted
 import com.example.siderotate.theme.SideRotateTheme
 import com.example.siderotate.update.DownloadCallback
 import com.example.siderotate.update.GitHubUpdateManager
@@ -354,6 +366,9 @@ fun SideRotateDashboard(appPreferences: AppPreferences) {
                 appPreferences = appPreferences
             )
 
+            // Developer Section
+            DeveloperSectionCard()
+
             Spacer(modifier = Modifier.height(30.dp))
         }
     }
@@ -565,6 +580,16 @@ fun UpdateBannerCard(
 }
 
 @Composable
+fun sideRotateSwitchColors() = SwitchDefaults.colors(
+    checkedThumbColor = PaletteWarmCream,
+    checkedTrackColor = Color(0xFF244485),
+    checkedBorderColor = PaletteNavyBlue,
+    uncheckedThumbColor = Color(0xFF64748B),
+    uncheckedTrackColor = Color(0xFF070E24),
+    uncheckedBorderColor = Color(0xFF1B2D5A)
+)
+
+@Composable
 fun MasterStatusCard(
     settings: AppSettings,
     allPermissionsGranted: Boolean,
@@ -637,12 +662,7 @@ fun MasterStatusCard(
                 Switch(
                     checked = settings.isServiceEnabled,
                     onCheckedChange = onToggleService,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = IndigoPrimary,
-                        uncheckedThumbColor = Color(0xFF64748B),
-                        uncheckedTrackColor = DarkSurfaceVariant
-                    )
+                    colors = sideRotateSwitchColors()
                 )
             }
 
@@ -890,14 +910,19 @@ fun TestOverlayCard(
                 )
             }
 
+            Spacer(modifier = Modifier.width(12.dp))
+
             Button(
                 onClick = onTestClick,
-                colors = ButtonDefaults.buttonColors(containerColor = CyanAccent),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PaletteWarmCream,
+                    contentColor = PaletteNavyDark
+                ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
                     text = "Preview",
-                    color = Color(0xFF0F172A),
+                    color = PaletteNavyDark,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -935,7 +960,7 @@ fun OemOptimizationCard(onOpenOemSettings: () -> Unit) {
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(CyanAccent)
+                        .background(PaletteNavyBlue)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
@@ -948,7 +973,7 @@ fun OemOptimizationCard(onOpenOemSettings: () -> Unit) {
 
             Text(
                 text = OemHelper.getOemGuidanceText(),
-                color = Color(0xFF94A3B8),
+                color = TextSecondary,
                 fontSize = 13.sp,
                 lineHeight = 18.sp
             )
@@ -956,9 +981,15 @@ fun OemOptimizationCard(onOpenOemSettings: () -> Unit) {
             OutlinedButton(
                 onClick = onOpenOemSettings,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, PaletteNavyBlue)
             ) {
-                Text("Open Background Settings for $brandName", color = CyanAccent, fontSize = 13.sp)
+                Text(
+                    text = "Open Background Settings for $brandName",
+                    color = PaletteWarmCream,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
@@ -1092,27 +1123,27 @@ fun AppearanceSettingsCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Haptic Vibration",
                         color = Color.White,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "Vibrate softly on rotation button tap",
-                        color = Color(0xFF94A3B8),
+                        color = TextSecondary,
                         fontSize = 12.sp
                     )
                 }
 
+                Spacer(modifier = Modifier.width(16.dp))
+
                 Switch(
                     checked = settings.hapticFeedback,
                     onCheckedChange = { appPreferences.setHapticFeedback(it) },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = IndigoPrimary
-                    )
+                    colors = sideRotateSwitchColors()
                 )
             }
         }
@@ -1245,28 +1276,230 @@ fun RotationBehaviorCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Enable Upside-Down (180°)",
                         color = Color.White,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "Allow rotating screen when holding phone upside down",
-                        color = Color(0xFF94A3B8),
+                        color = TextSecondary,
                         fontSize = 12.sp
                     )
                 }
 
+                Spacer(modifier = Modifier.width(16.dp))
+
                 Switch(
                     checked = settings.allow180Rotation,
                     onCheckedChange = { appPreferences.setAllow180Rotation(it) },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = IndigoPrimary
-                    )
+                    colors = sideRotateSwitchColors()
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun DeveloperSectionCard() {
+    val context = LocalContext.current
+    val facts = remember {
+        listOf(
+            "Nigel built SideRotate after seeing an obscure Reddit request for a tilt button on Vivo & Tecno phones — dedicating an entire weekend just to save someone a second of auto-rotate hassle!",
+            "Legend has it Nigel spent an entire weekend building SideRotate instead of doing actual important work... Absolute dedication to solving random problems on Reddit!",
+            "Nigel believes that if smartphone manufacturers won't provide a clean feature, an open-source Android dev will build it within 48 hours.",
+            "Did you know? Nigel built SideRotate, Caspian, and Lsync with pure bespoke aesthetics and zero bloated libraries.",
+            "SideRotate was crafted with mathematical precision — because crooked rotation arrow tips were bothering Nigel way too much to leave alone!"
+        )
+    }
+
+    var factIndex by remember { mutableIntStateOf(0) }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "float_avatar")
+    val floatOffset by infiniteTransition.animateFloat(
+        initialValue = -3f,
+        targetValue = 3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "avatar_y"
+    )
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        // Section Header
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 4.dp)
+        ) {
+            Text(
+                text = "Developer",
+                color = PaletteWarmCream,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(PaletteNavyBlue.copy(alpha = 0.5f))
+                    .padding(horizontal = 7.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = "Creator",
+                    color = TextSecondary,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+
+        // Developer Profile Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, DarkBorder, RoundedCornerShape(20.dp)),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkSurface)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Top row: Avatar + Identity
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Floating Avatar with badge
+                    Box(
+                        modifier = Modifier
+                            .offset(y = floatOffset.dp)
+                            .size(62.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.developer),
+                            contentDescription = "NigelWeb Developer Profile",
+                            modifier = Modifier
+                                .size(58.dp)
+                                .clip(CircleShape)
+                                .border(2.dp, PaletteNavyBlue, CircleShape)
+                                .align(Alignment.Center)
+                        )
+                        // Floating mini sparkle badge
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .size(20.dp)
+                                .clip(CircleShape)
+                                .background(PaletteNavyCard)
+                                .border(1.dp, PaletteWarmCream, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = "✨", fontSize = 10.sp)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    // Developer Name & Github link
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "NigelWeb",
+                                color = Color.White,
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "• Lead Architect",
+                                color = TextSecondary,
+                                fontSize = 12.sp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        // GitHub chip link
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(PaletteNavyBlue.copy(alpha = 0.45f))
+                                .border(1.dp, PaletteNavyBlue, RoundedCornerShape(8.dp))
+                                .clickable {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/code4nigel"))
+                                    context.startActivity(intent)
+                                }
+                                .padding(horizontal = 9.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = "🐙", fontSize = 12.sp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "github.com/code4nigel",
+                                color = PaletteWarmCream,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
+
+                HorizontalDivider(color = DarkBorder, thickness = 0.5.dp)
+
+                // Interactive Nigel Facts Bubble
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0xFF070E24))
+                        .border(1.dp, PaletteNavyBlue.copy(alpha = 0.7f), RoundedCornerShape(14.dp))
+                        .clickable {
+                            factIndex = (factIndex + 1) % facts.size
+                        }
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "💡 Tap for a Nigel Fact!",
+                            color = PaletteWarmCream,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "${factIndex + 1}/${facts.size}",
+                            color = TextMuted,
+                            fontSize = 11.sp
+                        )
+                    }
+
+                    Crossfade(
+                        targetState = facts[factIndex],
+                        animationSpec = tween(220),
+                        label = "fact_crossfade"
+                    ) { factText ->
+                        Text(
+                            text = factText,
+                            color = Color(0xFFCBD5E1),
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp
+                        )
+                    }
+                }
             }
         }
     }
