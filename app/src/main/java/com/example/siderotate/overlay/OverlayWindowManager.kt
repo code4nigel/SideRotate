@@ -15,7 +15,7 @@ import android.provider.Settings
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
-import android.view.View
+import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.view.animation.OvershootInterpolator
 import android.widget.FrameLayout
@@ -24,6 +24,7 @@ import androidx.core.content.ContextCompat
 import com.example.siderotate.R
 import com.example.siderotate.data.AppSettings
 import com.example.siderotate.data.ButtonPosition
+import kotlin.math.hypot
 
 class OverlayWindowManager(private val context: Context) {
 
@@ -33,16 +34,22 @@ class OverlayWindowManager(private val context: Context) {
 
     private var rootView: FrameLayout? = null
     private var buttonView: ImageView? = null
+    private var currentWindowLayoutParams: WindowManager.LayoutParams? = null
     private var isShowing = false
     private var currentTargetRotation: Int = 0
     private var onRotateClickListener: ((targetRotation: Int) -> Unit)? = null
+    private var onDismissListener: ((userSwiped: Boolean) -> Unit)? = null
 
     private val autoDismissRunnable = Runnable {
-        hideOverlay()
+        hideOverlay(userSwiped = false)
     }
 
     fun setOnRotateClickListener(listener: (targetRotation: Int) -> Unit) {
         this.onRotateClickListener = listener
+    }
+
+    fun setOnDismissListener(listener: (userSwiped: Boolean) -> Unit) {
+        this.onDismissListener = listener
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -55,7 +62,7 @@ class OverlayWindowManager(private val context: Context) {
         handler.removeCallbacks(autoDismissRunnable)
 
         if (isShowing && rootView != null) {
-            // Already showing, just refresh timeout
+            // Already showing, update target and reset dismissal timer once
             handler.postDelayed(autoDismissRunnable, settings.overlayTimeoutMs)
             return
         }
@@ -83,11 +90,18 @@ class OverlayWindowManager(private val context: Context) {
             this.x = marginXPx
             this.y = marginYPx
         }
+        this.currentWindowLayoutParams = windowLayoutParams
 
         val root = FrameLayout(context).apply {
             clipChildren = false
             clipToPadding = false
         }
+
+        val touchSlop = ViewConfiguration.get(context).scaledTouchSlop.toFloat()
+        val swipeThresholdPx = 36f * density
+        var downRawX = 0f
+        var downRawY = 0f
+        var isDragging = false
 
         val button = ImageView(context).apply {
             this.layoutParams = FrameLayout.LayoutParams(
@@ -104,16 +118,73 @@ class OverlayWindowManager(private val context: Context) {
             setOnTouchListener { v, event ->
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        v.animate().scaleX(0.88f).scaleY(0.88f).setDuration(100).start()
+                        downRawX = event.rawX
+                        downRawY = event.rawY
+                        isDragging = false
+                        v.animate().scaleX(0.92f).scaleY(0.92f).setDuration(80).start()
                     }
+
+                    MotionEvent.ACTION_MOVE -> {
+                        val deltaX = event.rawX - downRawX
+                        val deltaY = event.rawY - downRawY
+                        val distance = hypot(deltaX.toDouble(), deltaY.toDouble()).toFloat()
+
+                        if (distance > touchSlop) {
+                            isDragging = true
+                            // Follow user touch gesture
+                            v.translationX = deltaX * 0.75f
+                            v.translationY = deltaY * 0.75f
+                            v.alpha = (1f - (distance / (110f * density))).coerceIn(0.25f, 1f)
+                        }
+                    }
+
                     MotionEvent.ACTION_UP -> {
-                        v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start()
-                        performTapHaptic(settings.hapticFeedback)
-                        onRotateClickListener?.invoke(currentTargetRotation)
-                        hideOverlay()
+                        val deltaX = event.rawX - downRawX
+                        val deltaY = event.rawY - downRawY
+                        val distance = hypot(deltaX.toDouble(), deltaY.toDouble()).toFloat()
+
+                        if (isDragging && distance > swipeThresholdPx) {
+                            // User swiped away the button!
+                            performTapHaptic(settings.hapticFeedback)
+                            v.animate()
+                                .translationX(deltaX * 2.2f)
+                                .translationY(deltaY * 2.2f)
+                                .alpha(0f)
+                                .scaleX(0.4f)
+                                .scaleY(0.4f)
+                                .setDuration(160)
+                                .setListener(object : AnimatorListenerAdapter() {
+                                    override fun onAnimationEnd(animation: Animator) {
+                                        hideOverlay(userSwiped = true)
+                                    }
+                                })
+                                .start()
+                        } else {
+                            // Tap event: trigger rotation
+                            v.animate()
+                                .translationX(0f)
+                                .translationY(0f)
+                                .scaleX(1.0f)
+                                .scaleY(1.0f)
+                                .alpha(1.0f)
+                                .setDuration(100)
+                                .start()
+
+                            performTapHaptic(settings.hapticFeedback)
+                            onRotateClickListener?.invoke(currentTargetRotation)
+                            hideOverlay(userSwiped = false)
+                        }
                     }
+
                     MotionEvent.ACTION_CANCEL -> {
-                        v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start()
+                        v.animate()
+                            .translationX(0f)
+                            .translationY(0f)
+                            .scaleX(1.0f)
+                            .scaleY(1.0f)
+                            .alpha(1.0f)
+                            .setDuration(100)
+                            .start()
                     }
                 }
                 true
@@ -132,6 +203,8 @@ class OverlayWindowManager(private val context: Context) {
             button.alpha = 0f
             button.scaleX = 0.4f
             button.scaleY = 0.4f
+            button.translationX = 0f
+            button.translationY = 0f
             button.animate()
                 .alpha(1f)
                 .scaleX(1f)
@@ -140,7 +213,7 @@ class OverlayWindowManager(private val context: Context) {
                 .setInterpolator(OvershootInterpolator(1.3f))
                 .start()
 
-            // Schedule auto-hide
+            // Schedule auto-dismiss
             handler.postDelayed(autoDismissRunnable, settings.overlayTimeoutMs)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -148,7 +221,42 @@ class OverlayWindowManager(private val context: Context) {
         }
     }
 
-    fun hideOverlay() {
+    /**
+     * Updates dimensions, margins, and timeout in real-time if overlay is currently attached.
+     */
+    fun updateSettings(settings: AppSettings) {
+        val root = rootView ?: return
+        if (!isShowing || !root.isAttachedToWindow) return
+
+        val density = context.resources.displayMetrics.density
+        val sizePx = (settings.buttonSizeDp * density).toInt()
+        val marginXPx = (settings.marginHorizontalDp * density).toInt()
+        val marginYPx = (settings.marginVerticalDp * density).toInt()
+
+        val gravity = when (settings.buttonPosition) {
+            ButtonPosition.BOTTOM_LEFT -> Gravity.BOTTOM or Gravity.START
+            ButtonPosition.BOTTOM_RIGHT -> Gravity.BOTTOM or Gravity.END
+        }
+
+        currentWindowLayoutParams?.let { params ->
+            params.width = sizePx
+            params.height = sizePx
+            params.gravity = gravity
+            params.x = marginXPx
+            params.y = marginYPx
+            try {
+                windowManager.updateViewLayout(root, params)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        // Dynamically reset the auto-dismiss timer to the updated timeout
+        handler.removeCallbacks(autoDismissRunnable)
+        handler.postDelayed(autoDismissRunnable, settings.overlayTimeoutMs)
+    }
+
+    fun hideOverlay(userSwiped: Boolean = false) {
         handler.removeCallbacks(autoDismissRunnable)
         val currentRoot = rootView ?: return
         val currentButton = buttonView
@@ -156,7 +264,9 @@ class OverlayWindowManager(private val context: Context) {
         if (!isShowing) return
         isShowing = false
 
-        if (currentButton != null) {
+        onDismissListener?.invoke(userSwiped)
+
+        if (currentButton != null && !userSwiped) {
             currentButton.animate()
                 .alpha(0f)
                 .scaleX(0.5f)
@@ -185,6 +295,7 @@ class OverlayWindowManager(private val context: Context) {
         }
         rootView = null
         buttonView = null
+        currentWindowLayoutParams = null
     }
 
     private fun performTapHaptic(enabled: Boolean) {

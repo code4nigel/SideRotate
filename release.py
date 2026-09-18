@@ -98,7 +98,7 @@ def package_release(version_name: str) -> Path:
     return destination_apk
 
 
-def git_commit_and_tag(version_name: str, should_push: bool = True):
+def git_commit_and_tag(version_name: str, commit_message: str = None, should_push: bool = True):
     print("[*] Managing Git repository state...")
 
     # Initialize git if needed
@@ -107,6 +107,7 @@ def git_commit_and_tag(version_name: str, should_push: bool = True):
         print("[+] Initialized git repository.")
 
     tag_name = f"v{version_name}"
+    final_message = commit_message if commit_message else f"Release {tag_name}: Side Rotate {tag_name}"
 
     # Stage changes
     subprocess.run(["git", "add", "-A"], cwd=str(PROJECT_ROOT), check=True)
@@ -121,11 +122,11 @@ def git_commit_and_tag(version_name: str, should_push: bool = True):
 
     if status_proc.stdout.strip():
         subprocess.run(
-            ["git", "commit", "-m", f"Release {tag_name}: Side Rotate {tag_name}"],
+            ["git", "commit", "-m", final_message],
             cwd=str(PROJECT_ROOT),
             check=True
         )
-        print(f"[+] Committed release {tag_name}.")
+        print(f"[+] Committed: {final_message}")
     else:
         print("[*] No code changes to commit.")
 
@@ -137,7 +138,7 @@ def git_commit_and_tag(version_name: str, should_push: bool = True):
         text=True
     )
     if not tag_check.stdout.strip():
-        subprocess.run(["git", "tag", "-a", tag_name, "-m", f"Side Rotate {tag_name}"], cwd=str(PROJECT_ROOT), check=True)
+        subprocess.run(["git", "tag", "-a", tag_name, "-m", final_message], cwd=str(PROJECT_ROOT), check=True)
         print(f"[+] Created Git tag {tag_name}.")
     else:
         print(f"[*] Git tag {tag_name} already exists.")
@@ -160,26 +161,35 @@ def git_commit_and_tag(version_name: str, should_push: bool = True):
 
 def main():
     custom_ver = None
+    commit_msg = None
     should_push = True
 
     args = sys.argv[1:]
     filtered_args = []
-    for arg in args:
+    i = 0
+    while i < len(args):
+        arg = args[i]
         if arg == "--no-push":
             should_push = False
+        elif arg in ("--message", "-m") and i + 1 < len(args):
+            commit_msg = args[i + 1]
+            i += 1
+        elif arg in ("--version", "-v") and i + 1 < len(args):
+            custom_ver = args[i + 1]
+            i += 1
         else:
             filtered_args.append(arg)
+        i += 1
 
-    if filtered_args:
-        if filtered_args[0] in ("--version", "-v") and len(filtered_args) > 1:
-            custom_ver = filtered_args[1]
-        elif not filtered_args[0].startswith("-"):
-            custom_ver = filtered_args[0]
+    if not custom_ver and filtered_args:
+        custom_ver = filtered_args[0]
+        if len(filtered_args) > 1 and not commit_msg:
+            commit_msg = filtered_args[1]
 
     new_code, new_name = update_gradle_versions(custom_ver)
     run_gradle_build()
     dest = package_release(new_name)
-    git_commit_and_tag(new_name, should_push=should_push)
+    git_commit_and_tag(new_name, commit_message=commit_msg, should_push=should_push)
 
 
 if __name__ == "__main__":

@@ -23,6 +23,11 @@ import com.example.siderotate.R
 import com.example.siderotate.core.RotationController
 import com.example.siderotate.data.AppPreferences
 import com.example.siderotate.overlay.OverlayWindowManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class SideRotateService : Service() {
 
@@ -36,6 +41,10 @@ class SideRotateService : Service() {
     private var isScreenInteractive = true
     private var lastKnownOrientation: Int? = null
 
+    private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private var currentDetectedTarget: Int? = null
+    private var dismissedForRotation: Int? = null
+
     override fun onCreate() {
         super.onCreate()
         appPreferences = AppPreferences(this)
@@ -45,6 +54,17 @@ class SideRotateService : Service() {
             val settings = appPreferences.getSettingsSnapshot()
             RotationController.applyRotation(this, targetRotation, settings.rotationMode) {
                 updateNotification()
+            }
+        }
+
+        overlayWindowManager.setOnDismissListener { userSwiped ->
+            // Mark dismissed for this specific target rotation so timer/swipe stays dismissed until tilt changes
+            dismissedForRotation = currentDetectedTarget
+        }
+
+        serviceScope.launch {
+            appPreferences.settings.collect { settings ->
+                overlayWindowManager.updateSettings(settings)
             }
         }
 
@@ -96,6 +116,8 @@ class SideRotateService : Service() {
             } else {
                 Surface.ROTATION_0
             }
+            dismissedForRotation = null
+            currentDetectedTarget = testTarget
             overlayWindowManager.showOverlay(testTarget, settings)
             return START_STICKY
         }
@@ -177,12 +199,12 @@ class SideRotateService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val currentRot = RotationController.getCurrentUserRotation(this)
-        val rotDesc = when (currentRot) {
-            Surface.ROTATION_0 -> "Portrait"
-            Surface.ROTATION_90 -> "Landscape"
-            Surface.ROTATION_270 -> "Landscape (Inverted)"
-            Surface.ROTATION_180 -> "Portrait (Inverted)"
+        val currentRotation = RotationController.getCurrentUserRotation(this)
+        val rotDesc = when (currentRotation) {
+            Surface.ROTATION_0 -> "Portrait (0°)"
+            Surface.ROTATION_90 -> "Landscape (90°)"
+            Surface.ROTATION_180 -> "Portrait Inverted (180°)"
+            Surface.ROTATION_270 -> "Landscape (270°)"
             else -> "Portrait"
         }
 
@@ -209,6 +231,8 @@ class SideRotateService : Service() {
                 val settings = appPreferences.getSettingsSnapshot()
                 if (!settings.isServiceEnabled) {
                     overlayWindowManager.hideOverlay()
+                    currentDetectedTarget = null
+                    dismissedForRotation = null
                     return
                 }
 
@@ -217,6 +241,8 @@ class SideRotateService : Service() {
                     if (overlayWindowManager.isOverlayShowing()) {
                         overlayWindowManager.hideOverlay()
                     }
+                    currentDetectedTarget = null
+                    dismissedForRotation = null
                     return
                 }
 
@@ -228,9 +254,17 @@ class SideRotateService : Service() {
 
                 if (targetRotation != null && targetRotation != currentRotation) {
                     // Phone physically tilted to an orientation different from current display
-                    overlayWindowManager.showOverlay(targetRotation, settings)
+                    if (targetRotation != currentDetectedTarget) {
+                        currentDetectedTarget = targetRotation
+                        // Phone entered a new target orientation: show if not previously dismissed for this angle
+                        if (dismissedForRotation != targetRotation) {
+                            overlayWindowManager.showOverlay(targetRotation, settings)
+                        }
+                    }
                 } else if (targetRotation != null && targetRotation == currentRotation) {
                     // Phone returned to current orientation
+                    currentDetectedTarget = null
+                    dismissedForRotation = null
                     if (overlayWindowManager.isOverlayShowing()) {
                         overlayWindowManager.hideOverlay()
                     }
@@ -246,6 +280,8 @@ class SideRotateService : Service() {
                 super.onChange(selfChange)
                 if (!RotationController.isAutoRotateLocked(this@SideRotateService)) {
                     overlayWindowManager.hideOverlay()
+                    currentDetectedTarget = null
+                    dismissedForRotation = null
                 }
             }
         }
@@ -260,6 +296,8 @@ class SideRotateService : Service() {
                         isScreenInteractive = false
                         orientationListener?.disable()
                         overlayWindowManager.hideOverlay()
+                        currentDetectedTarget = null
+                        dismissedForRotation = null
                     }
                     Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> {
                         isScreenInteractive = true
@@ -281,6 +319,7 @@ class SideRotateService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        serviceScope.cancel()
         orientationListener?.disable()
         overlayWindowManager.hideOverlay()
 

@@ -40,6 +40,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -383,7 +384,8 @@ fun TopAppBarModern(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .statusBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -394,15 +396,16 @@ fun TopAppBarModern(
                     .clip(RoundedCornerShape(14.dp))
                     .background(
                         Brush.linearGradient(
-                            listOf(IndigoPrimary, CyanAccent)
+                            listOf(PaletteNavyBlue, PaletteNavyCard)
                         )
-                    ),
+                    )
+                    .border(1.dp, PaletteWarmCream.copy(alpha = 0.5f), RoundedCornerShape(14.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_rotate_screen),
                     contentDescription = "App Icon",
-                    tint = Color.White,
+                    tint = PaletteWarmCream,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -419,7 +422,7 @@ fun TopAppBarModern(
                 )
                 Text(
                     text = "Smart Tilt Orientation Helper",
-                    color = Color(0xFF94A3B8),
+                    color = TextSecondary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -427,20 +430,29 @@ fun TopAppBarModern(
         }
 
         Surface(
-            shape = RoundedCornerShape(10.dp),
-            color = DarkSurfaceVariant,
-            border = BorderStroke(1.dp, DarkBorder),
-            modifier = Modifier.clickable(onClick = onCheckUpdateClick)
+            shape = RoundedCornerShape(12.dp),
+            color = PaletteNavyCard,
+            border = BorderStroke(1.5.dp, PaletteWarmCream.copy(alpha = 0.85f)),
+            modifier = Modifier
+                .clip(RoundedCornerShape(12.dp))
+                .clickable(onClick = onCheckUpdateClick)
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
                     text = if (isCheckingUpdate) "Checking..." else "v$currentVersion",
-                    color = CyanAccent,
+                    color = PaletteWarmCream,
                     fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
+                )
+                Text(
+                    text = if (isCheckingUpdate) "⏳" else "↻",
+                    color = PaletteWarmCream,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -460,9 +472,9 @@ fun UpdateBannerCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, CyanAccent.copy(alpha = 0.5f), RoundedCornerShape(20.dp)),
+            .border(1.dp, PaletteWarmCream.copy(alpha = 0.6f), RoundedCornerShape(20.dp)),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant)
+        colors = CardDefaults.cardColors(containerColor = PaletteNavyCard)
     ) {
         Column(
             modifier = Modifier
@@ -480,24 +492,31 @@ fun UpdateBannerCard(
                         modifier = Modifier
                             .size(10.dp)
                             .clip(CircleShape)
-                            .background(CyanAccent)
+                            .background(EmeraldSuccess)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "NEW VERSION AVAILABLE",
-                        color = CyanAccent,
+                        color = EmeraldSuccess,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
                     )
                 }
 
-                Text(
-                    text = "v${updateInfo.cleanVersion}",
-                    color = Color.White,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = PaletteNavyBlue.copy(alpha = 0.6f),
+                    border = BorderStroke(1.dp, PaletteWarmCream.copy(alpha = 0.4f))
+                ) {
+                    Text(
+                        text = "v${updateInfo.cleanVersion}",
+                        color = PaletteWarmCream,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
             }
 
             Text(
@@ -508,13 +527,28 @@ fun UpdateBannerCard(
             )
 
             if (!updateInfo.changelogBody.isNullOrBlank()) {
-                Text(
-                    text = updateInfo.changelogBody,
-                    color = Color(0xFFCBD5E1),
-                    fontSize = 13.sp,
-                    maxLines = 4,
-                    lineHeight = 18.sp
-                )
+                val cleanChangelog = updateInfo.changelogBody
+                    .lines()
+                    .filter { line ->
+                        val trimmed = line.trim()
+                        !trimmed.startsWith("#### Installation") &&
+                                !trimmed.startsWith("1. Download") &&
+                                !trimmed.startsWith("2. Open the file") &&
+                                !trimmed.startsWith("3. Grant required")
+                    }
+                    .joinToString("\n")
+                    .trim()
+                    .removePrefix("### ")
+
+                if (cleanChangelog.isNotBlank()) {
+                    Text(
+                        text = cleanChangelog,
+                        color = Color(0xFFCBD5E1),
+                        fontSize = 13.sp,
+                        maxLines = 6,
+                        lineHeight = 18.sp
+                    )
+                }
             }
 
             if (isDownloading) {
@@ -530,7 +564,7 @@ fun UpdateBannerCard(
                         )
                         Text(
                             text = if (downloadProgress >= 0) "$downloadProgress%" else "Connecting...",
-                            color = CyanAccent,
+                            color = PaletteWarmCream,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -541,15 +575,18 @@ fun UpdateBannerCard(
                             .fillMaxWidth()
                             .height(8.dp)
                             .clip(RoundedCornerShape(4.dp)),
-                        color = CyanAccent,
-                        trackColor = DarkSurface
+                        color = PaletteWarmCream,
+                        trackColor = PaletteNavyBlue
                     )
                 }
             } else if (downloadedApkFile != null) {
                 Button(
                     onClick = { onInstallClick(downloadedApkFile) },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldSuccess),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = EmeraldSuccess,
+                        contentColor = Color.White
+                    ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
@@ -564,12 +601,15 @@ fun UpdateBannerCard(
                 Button(
                     onClick = onDownloadClick,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = CyanAccent),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PaletteWarmCream,
+                        contentColor = PaletteNavyDark
+                    ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
                         text = "Download & Install Update$sizeText",
-                        color = Color(0xFF0F172A),
+                        color = PaletteNavyDark,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -1000,6 +1040,7 @@ fun AppearanceSettingsCard(
     settings: AppSettings,
     appPreferences: AppPreferences
 ) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1052,32 +1093,71 @@ fun AppearanceSettingsCard(
             HorizontalDivider(color = DarkBorder, thickness = 0.5.dp)
 
             // Button Size Slider
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Button Size",
-                        color = Color(0xFFCBD5E1),
-                        fontSize = 13.sp
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Button Size",
+                            color = Color(0xFFCBD5E1),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Live preview • Updates dynamically in real time",
+                            color = TextSecondary,
+                            fontSize = 11.sp
+                        )
+                    }
+
+                    // Live in-card scale preview circle
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(
+                                Brush.linearGradient(
+                                    listOf(PaletteNavyBlue, PaletteNavyCard)
+                                )
+                            )
+                            .border(1.dp, PaletteWarmCream, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_rotate_screen),
+                            contentDescription = "Size Preview",
+                            tint = PaletteWarmCream,
+                            modifier = Modifier.size((settings.buttonSizeDp * 0.38f).dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(10.dp))
+
                     Text(
                         text = "${settings.buttonSizeDp} dp",
-                        color = IndigoSecondary,
+                        color = PaletteWarmCream,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
+
                 Slider(
                     value = settings.buttonSizeDp.toFloat(),
                     onValueChange = { appPreferences.setButtonSizeDp(it.toInt()) },
+                    onValueChangeFinished = {
+                        if (RotationController.canDrawOverlays(context)) {
+                            SideRotateService.testOverlay(context)
+                        }
+                    },
                     valueRange = 48f..72f,
                     steps = 5,
                     colors = SliderDefaults.colors(
-                        thumbColor = IndigoPrimary,
-                        activeTrackColor = IndigoPrimary,
-                        inactiveTrackColor = DarkSurfaceVariant
+                        thumbColor = PaletteWarmCream,
+                        activeTrackColor = PaletteWarmCream,
+                        inactiveTrackColor = PaletteNavyBlue
                     )
                 )
             }
@@ -1085,19 +1165,28 @@ fun AppearanceSettingsCard(
             HorizontalDivider(color = DarkBorder, thickness = 0.5.dp)
 
             // Auto-Dismiss Timeout Slider
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Auto-Dismiss Timeout",
-                        color = Color(0xFFCBD5E1),
-                        fontSize = 13.sp
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Auto-Dismiss Timeout",
+                            color = Color(0xFFCBD5E1),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Hides automatically or swipe away anytime",
+                            color = TextSecondary,
+                            fontSize = 11.sp
+                        )
+                    }
                     Text(
                         text = "${settings.overlayTimeoutMs / 1000}s",
-                        color = IndigoSecondary,
+                        color = PaletteWarmCream,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -1108,9 +1197,9 @@ fun AppearanceSettingsCard(
                     valueRange = 2f..8f,
                     steps = 5,
                     colors = SliderDefaults.colors(
-                        thumbColor = IndigoPrimary,
-                        activeTrackColor = IndigoPrimary,
-                        inactiveTrackColor = DarkSurfaceVariant
+                        thumbColor = PaletteWarmCream,
+                        activeTrackColor = PaletteWarmCream,
+                        inactiveTrackColor = PaletteNavyBlue
                     )
                 )
             }
@@ -1308,8 +1397,8 @@ fun DeveloperSectionCard() {
     val context = LocalContext.current
     val facts = remember {
         listOf(
-            "Nigel built SideRotate after seeing an obscure Reddit request for a tilt button on Vivo & Tecno phones — dedicating an entire weekend just to save someone a second of auto-rotate hassle!",
-            "Legend has it Nigel spent an entire weekend building SideRotate instead of doing actual important work... Absolute dedication to solving random problems on Reddit!",
+            "Nigel built SideRotate after seeing a reddit request for a tilt button on Vivo phones — dedicating an entire afternoon just to save someone a second of auto-rotate hassle!",
+            "Legend has it Nigel spent an entire weekend building SideRotate instead of doing actual important work... Absolute dedication to solving random problems!",
             "Nigel believes that if smartphone manufacturers won't provide a clean feature, an open-source Android dev will build it within 48 hours.",
             "Did you know? Nigel built SideRotate, Caspian, and Lsync with pure bespoke aesthetics and zero bloated libraries.",
             "SideRotate was crafted with mathematical precision — because crooked rotation arrow tips were bothering Nigel way too much to leave alone!"

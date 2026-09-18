@@ -60,20 +60,24 @@ jobs:
           echo "Found APK: $LATEST_APK"
           echo "Target Tag: $RELEASE_TAG"
 
+      - name: Extract Commit Message and Changelog
+        id: commit_notes
+        run: |
+          MSG=$(git log -1 --pretty=%B | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+          if [ -z "$MSG" ]; then
+            MSG="Release ${{ steps.prep_release.outputs.tag }}"
+          fi
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$MSG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.prep_release.outputs.tag }}
           name: Side Rotate ${{ steps.prep_release.outputs.tag }}
           body: |
-            ### Side Rotate ${{ steps.prep_release.outputs.tag }}
-
-            Automated release build.
-
-            #### Installation
-            1. Download `${{ steps.prep_release.outputs.filename }}` below.
-            2. Open the file on your device to install.
-            3. Grant required overlay and modify system settings permissions.
+            ${{ steps.commit_notes.outputs.notes }}
           files: ${{ steps.prep_release.outputs.apk_path }}
           draft: false
           prerelease: false
