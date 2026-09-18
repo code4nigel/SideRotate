@@ -6,15 +6,28 @@ When auto-rotate is locked and the device is physically tilted sideways, Side Ro
 
 ---
 
+## Demonstration
+
+<div align="center">
+  <img src="UI/UI%20Demo2.jpg" width="320" alt="Side Rotate Modern Dashboard" />
+  <p><em>Side Rotate edge-to-edge interface with active orientation monitoring and real-time customizer</em></p>
+</div>
+
+A full video demonstration showcasing the tilt detection, live floating rotation button, swipe-to-dismiss gesture, and instantaneous screen rotation is available:
+
+- [Watch Video Demonstration](UI/Video%20Demo.mp4)
+
+---
+
 ## The Problem Solved
 
-On stock Android, a small rotation suggestion button appears in the navigation bar when the phone is tilted. However, on various manufacturer skins, this functionality is often broken or missing:
+On stock Android, a small rotation suggestion button appears in the navigation bar when the phone is tilted. However, across various Android devices and custom operating systems, this functionality is often broken, unreliable, or completely missing:
 
-1. **Vivo Funtouch OS / OriginOS:** When full-screen navigation gestures are enabled, the navigation bar is completely hidden, preventing the native rotation suggestion button from appearing.
-2. **Tecno HiOS / Infinix XOS:** Aggressive memory optimization frequently disables background orientation listeners, and gesture navigation suppresses rotation controls.
-3. **Samsung One UI:** Users frequently want a quick, thumb-accessible corner button that remains consistent across all apps and home screens.
+- **Gesture Navigation Conflicts:** When full-screen gesture navigation is enabled, the traditional navigation bar is hidden, preventing the native system rotation suggestion button from ever appearing.
+- **Aggressive Background Killing:** Many custom manufacturer skins aggressively restrict background orientation sensors when an app is not actively focused, breaking native tilt detection.
+- **Inconsistent Accessibility:** Users frequently want a persistent, thumb-friendly floating rotation control that behaves predictably and stays consistent across all apps, media players, and home screens.
 
-Side Rotate solves this by running an efficient foreground orientation monitor and presenting an overlay button that works regardless of your navigation method.
+Side Rotate solves this seamlessly by maintaining an ultra-lightweight foreground orientation monitor that renders an accessible overlay button on demand, regardless of your navigation mode or launcher.
 
 ---
 
@@ -24,16 +37,32 @@ Side Rotate solves this by running an efficient foreground orientation monitor a
 - **Dual Rotation Engines:**
   - *Direct System Rotation (Primary):* Immediately updates the system orientation setting.
   - *Auto-Rotate Quick Pulse (Fallback):* Momentarily engages sensor orientation for devices with restricted settings access.
-- **Zero Battery Consumption on Sleep:** Automatically suspends the accelerometer orientation listener whenever the display is turned off or locked, consuming zero extra battery in pockets or while idle.
-- **Samsung One UI Aesthetics:** Features a clean, circular floating button with rounded corner geometry, smooth entrance/exit animations, and tactile haptic feedback.
+- **Swipe-to-Dismiss Gesture:** If the rotation button appears and rotation is not desired, a quick swipe in any direction flings it off-screen immediately until the next tilt.
+- **Zero Battery Consumption on Sleep:** Automatically suspends accelerometer listeners whenever the display is turned off or locked, consuming zero extra battery in pockets or while idle.
+- **High-Contrast Aesthetics:** Features a refined midnight-navy and warm-cream palette with rounded corner geometry, smooth entrance/exit animations, and tactile haptic feedback.
 - **Android 13+ Themed Adaptive Icons:** Includes a two-layer adaptive launcher icon with a dedicated monochrome layer that dynamically matches system wallpaper palettes on Android 13, 14, and 15.
 - **Built-in GitHub Auto-Updater:** Checks for new releases directly from GitHub, downloads APK updates with real-time progress, and prompts the native Android package installer.
 - **Customizable Interface:**
   - Corner position selection (Bottom-Left or Bottom-Right).
-  - Button size adjustment (48dp to 72dp).
-  - Auto-dismiss timeout configuration (2s to 8s).
+  - Real-time button size adjustment (48dp to 72dp) with dynamic on-screen scaling.
+  - Auto-dismiss timeout configuration (2s to 8s) with state-transition timers.
   - Haptic feedback toggle.
   - Optional 180-degree upside-down rotation support.
+
+---
+
+## Security and Privacy
+
+Side Rotate is engineered with complete respect for user privacy:
+
+- **Zero Analytics or Trackers:** No tracking libraries, telemetry, crash reporters, or third-party analytics are embedded.
+- **No Personal Data Collected:** The application does not collect, log, transmit, or process any personal or device identifiers.
+- **Network Scope:** Internet permission is used solely to query the public GitHub API for app updates and download release binaries directly from this repository.
+- **Verified Antivirus Scan:** Clean security rating on VirusTotal with zero detections across all scanning vendors.
+
+<div align="center">
+  <img src="UI/VirusTotal_SideRotateScan.jpg" width="650" alt="VirusTotal Security Scan Report" />
+</div>
 
 ---
 
@@ -45,26 +74,10 @@ To function across all apps and control display rotation, Side Rotate requires t
 | :--- | :--- |
 | **Display Over Other Apps (`SYSTEM_ALERT_WINDOW`)** | Allows rendering the floating rotation button above third-party applications. |
 | **Modify System Settings (`WRITE_SETTINGS`)** | Allows updating the system orientation value without toggling auto-rotate on. |
-| **Ignore Battery Optimizations** | Prevents aggressive OEM background cleaners from killing the orientation listener. |
+| **Ignore Battery Optimizations** | Prevents aggressive operating system background cleaners from killing the orientation listener. |
 | **Post Notifications (`POST_NOTIFICATIONS`)** | Required on Android 13+ for persistent foreground service execution. |
 | **Internet (`INTERNET`)** | Used exclusively for querying GitHub releases and downloading app updates. |
 | **Request Install Packages (`REQUEST_INSTALL_PACKAGES`)** | Allows in-app installation of downloaded APK updates. |
-
----
-
-## Device-Specific Setup Instructions
-
-### Vivo (Funtouch OS / OriginOS)
-1. Open **Settings** > **Apps** > **Special App Access** > **Autostart** and enable Side Rotate.
-2. Open **Settings** > **Battery** > **Background Power Consumption Management**, locate Side Rotate, and choose **High background power consumption**.
-3. In Side Rotate, ensure **Display Over Other Apps** and **Modify System Settings** are granted.
-
-### Tecno / Infinix (HiOS / XOS)
-1. Open **Phone Master** > **Auto-start management** and enable Side Rotate.
-2. Ensure Battery Optimization is set to **Unrestricted**.
-
-### Samsung (One UI)
-1. Open **Settings** > **Battery** > **Background usage limits** > **Never sleeping apps** and add Side Rotate.
 
 ---
 
@@ -77,7 +90,7 @@ To function across all apps and control display rotation, Side Rotate requires t
 
 ### Method 2: Install via ADB
 ```bash
-adb install -r version/SideRotate_v1.0.1.apk
+adb install -r version/SideRotate_v1.0.4.apk
 ```
 
 ---
@@ -98,9 +111,9 @@ A Python release script is included to automate version bumps, compiling, and ar
 python release.py
 ```
 
-To specify an explicit version number:
+To specify an explicit version number and release message:
 ```bash
-python release.py 1.0.2
+python release.py 1.0.4 "Release notes or commit message"
 ```
 
 The script will:
@@ -108,12 +121,15 @@ The script will:
 2. Compile the debug APK via Gradle.
 3. Archive the generated binary into the `version/` directory with the format `SideRotate_v<version>.apk`.
 4. Commit changes and create a Git release tag.
+5. Push to GitHub to trigger automated release workflows.
 
 ---
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 (GPL-3.0). See the [LICENSE](LICENSE) file for details.
+Copyright (c) 2026 **Shivanshu Yadav**. All Rights Reserved.
+
+See the [LICENSE](LICENSE) file for terms and conditions.
 
 ---
 
