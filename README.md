@@ -94,36 +94,6 @@ adb install -r version/SideRotate_v1.0.4.apk
 
 ---
 
-## Development and Release Automation
-
-### Building from Source
-Ensure Android SDK and Java 17+ are installed, then run:
-
-```bash
-./gradlew assembleDebug
-```
-
-### Automated Versioning and Release
-A Python release script is included to automate version bumps, compiling, and artifact management:
-
-```bash
-python release.py
-```
-
-To specify an explicit version number and release message:
-```bash
-python release.py 1.0.4 "Release notes or commit message"
-```
-
-The script will:
-1. Increment the `versionCode` and update `versionName` in `app/build.gradle.kts`.
-2. Compile the debug APK via Gradle.
-3. Archive the generated binary into the `version/` directory with the format `SideRotate_v<version>.apk`.
-4. Commit changes and create a Git release tag.
-5. Push to GitHub to trigger automated release workflows.
-
----
-
 ## License
 
 Copyright (c) 2026 **Shivanshu Yadav**. All Rights Reserved.
